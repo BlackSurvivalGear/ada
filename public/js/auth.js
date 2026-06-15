@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const confirmPassword = document.getElementById('register-confirm-password').value;
 
             if (password !== confirmPassword) {
-                alert("Passwords do not match");
+                showError("Passwords do not match");
                 return;
             }
 
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Auth state observer in app.js will handle redirect
             } catch (error) {
                 console.error(error);
-                alert(error.message);
+                showError(error.message);
             }
         });
     }
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await auth.signInWithEmailAndPassword(email, password);
             } catch (error) {
                 console.error(error);
-                alert(error.message);
+                showError(error.message);
             }
         });
     }
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await auth.signInWithPopup(provider);
             } catch (error) {
                 console.error(error);
-                alert(error.message);
+                showError(error.message);
             }
         });
     }
