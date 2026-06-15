@@ -1,0 +1,29 @@
+{
+  "users": [
+    {
+      "uid": "demo-user-1",
+      "displayName": "Kofi Annan",
+      "email": "kofi@example.com",
+      "countryOfResidence": "Ghana",
+      "bio": "Former UN Secretary-General."
+    }
+  ],
+  "communities": [
+    {
+      "id": "demo-comm-1",
+      "name": "Global African Family",
+      "description": "Connecting Africans across the globe.",
+      "inviteCode": "AFRICA",
+      "ownerUid": "demo-user-1"
+    }
+  ],
+  "posts": [
+    {
+      "communityId": "demo-comm-1",
+      "authorName": "Kofi Annan",
+      "content": "Welcome to the Alkebulan Diaspora Alliance!",
+      "likeCount": 5,
+      "commentCount": 0
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ADA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body class="dashboard-body">
+    <header class="main-header">
+        <div class="container header-content">
+            <div class="logo-group">
+                <span class="logo">ADA</span>
+                <span id="current-community-name" class="community-badge">Loading...</span>
+            </div>
+            <nav class="header-nav">
+                <button id="switch-comm-btn" class="btn btn-text">Switch Community</button>
+                <div class="user-menu">
+                    <img id="header-user-photo" src="assets/default-avatar.png" alt="Profile" class="avatar-small">
+                    <button id="header-signout-btn" class="btn btn-text">Sign Out</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="dashboard-sidebar">
+            <div class="card info-card">
+                <h3>About Community</h3>
+                <p id="community-desc">...</p>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="stat-label">Members</span>
+                        <span id="member-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Your Role</span>
+                        <span id="user-role" class="stat-value">Member</span>
+                    </div>
+                </div>
+                <div class="invite-info">
+                    <p>Invite code: <strong id="display-invite-code">...</strong></p>
+                </div>
+            </div>
+
+            <div class="card members-card">
+                <h3>Recently Joined</h3>
+                <ul id="recent-members-list">
+                    <!-- Loaded via JS -->
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Feed -->
+        <section class="dashboard-feed">
+            <div class="card create-post-card">
+                <div class="post-input-group">
+                    <img id="post-author-photo" src="assets/default-avatar.png" alt="You" class="avatar-small">
+                    <textarea id="post-content" placeholder="Share something with the community..."></textarea>
+                </div>
+                <div class="post-actions">
+                    <label for="post-image" class="btn btn-outline btn-small">
+                        <span>📷 Add Photo</span>
+                        <input type="file" id="post-image" accept="image/*" style="display: none;">
+                    </label>
+                    <div id="image-preview-container" style="display: none;">
+                        <span id="remove-image">&times;</span>
+                        <img id="post-image-preview" src="" alt="Preview">
+                    </div>
+                    <button id="submit-post-btn" class="btn btn-primary">Post</button>
+                </div>
+            </div>
+
+            <div id="feed-container">
+                <!-- Posts loaded here -->
+                <div class="loading">Loading feed...</div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/feed.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
