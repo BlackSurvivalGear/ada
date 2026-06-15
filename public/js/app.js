@@ -30,6 +30,16 @@ function showSuccess(message) {
     }
 }
 
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function showLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = 'flex';
+}
+
 auth.onAuthStateChanged(async (user) => {
     const path = window.location.pathname;
     const page = path.split("/").pop();
@@ -42,12 +52,14 @@ auth.onAuthStateChanged(async (user) => {
             await handleAuthenticatedUser(user, page);
         } else {
             // User is signed out
+            hideLoading();
             if (page !== 'index.html' && page !== '') {
                 logStep('Authentication check', 'Redirecting to login');
                 window.location.href = 'index.html';
             }
         }
     } catch (error) {
+        hideLoading();
         console.error("Auth state change error:", error);
         showError("An error occurred during authentication. Please try again.");
     }
@@ -62,6 +74,8 @@ async function handleAuthenticatedUser(user, page) {
         if (page !== 'profile-setup.html') {
             logStep('Profile loading', 'Redirecting to profile setup');
             window.location.href = 'profile-setup.html';
+        } else {
+            hideLoading();
         }
         return;
     }
@@ -78,6 +92,8 @@ async function handleAuthenticatedUser(user, page) {
         if (page !== 'communities.html' && page !== 'profile-setup.html') {
             logStep('Community loading', 'Redirecting to communities page');
             window.location.href = 'communities.html';
+        } else {
+            hideLoading();
         }
         return;
     }
@@ -96,13 +112,19 @@ async function handleAuthenticatedUser(user, page) {
              if (page === 'index.html' || page === '' || page === 'profile-setup.html') {
                 logStep('Dashboard rendering', 'Redirecting to dashboard');
                 window.location.href = 'dashboard.html';
+             } else {
+                hideLoading();
              }
+        } else {
+            hideLoading();
         }
     } else {
         logStep('Community loading', 'No community selected');
         if (page === 'index.html' || page === '' || page === 'profile-setup.html') {
             logStep('Community loading', 'Redirecting to communities page');
             window.location.href = 'communities.html';
+        } else {
+            hideLoading();
         }
     }
 }

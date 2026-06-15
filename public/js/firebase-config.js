@@ -1,12 +1,11 @@
 // Firebase configuration
-// REPLACE WITH YOUR OWN CONFIGURATION
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDpCIXMZqeFT0Q_YCAlGZ2RxjLgmQn4MDA",
+  authDomain: "ada-social.firebaseapp.com",
+  projectId: "ada-social",
+  storageBucket: "ada-social.firebasestorage.app",
+  messagingSenderId: "390267113139",
+  appId: "1:390267113139:web:39bf5cb5523c2576562ac6"
 };
 
 // Initialize Firebase

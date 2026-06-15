@@ -73,16 +73,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (membershipsSnapshot.empty) {
                 logStep('Community loading', 'No memberships found. Showing onboarding UI.');
                 communitiesList.innerHTML = `
-                    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                    <div class="card onboarding-card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                         <h3>Welcome to the ADA!</h3>
                         <p>You haven't joined any communities yet. To get started, you can either:</p>
-                        <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 20px;">
-                            <button onclick="document.getElementById('invite-code').focus()" class="btn btn-secondary">Join via Invite Code</button>
-                            <span>OR</span>
-                            <button onclick="document.getElementById('show-create-modal').click()" class="btn btn-primary">Create Your Own</button>
+                        <div class="onboarding-options" style="margin-top: 2rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+                            <button id="onboarding-join-btn" class="btn btn-secondary">Join via Invite Code</button>
+                            <span style="align-self: center;">OR</span>
+                            <button id="onboarding-create-btn" class="btn btn-primary">Create Your Own</button>
                         </div>
                     </div>
                 `;
+
+                document.getElementById('onboarding-join-btn').addEventListener('click', () => {
+                    document.getElementById('invite-code').focus();
+                    window.scrollTo({ top: document.getElementById('join-community-form').offsetTop - 100, behavior: 'smooth' });
+                });
+
+                document.getElementById('onboarding-create-btn').addEventListener('click', () => {
+                    document.getElementById('show-create-modal').click();
+                });
+
                 return;
             }
 
