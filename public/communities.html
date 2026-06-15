@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Communities - ADA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="container header-content">
+            <div class="logo">ADA</div>
+            <nav>
+                <button id="signout-btn" class="btn btn-text">Sign Out</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="communities-layout">
+            <div class="welcome-banner">
+                <h1>Welcome, <span id="user-name">Friend</span>!</h1>
+                <p>Connect with your diaspora communities.</p>
+            </div>
+
+            <div class="communities-actions">
+                <div class="card">
+                    <h3>Join a Community</h3>
+                    <form id="join-community-form">
+                        <div class="form-group">
+                            <input type="text" id="invite-code" placeholder="Enter Invite Code" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Join</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Create a New Community</h3>
+                    <button id="show-create-modal" class="btn btn-primary">Get Started</button>
+                </div>
+            </div>
+
+            <div class="my-communities-section">
+                <h2>Your Communities</h2>
+                <div id="communities-list" class="communities-grid">
+                    <!-- Loaded via JS -->
+                    <p class="loading">Loading your communities...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Create Community Modal -->
+    <div id="create-community-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Create Community</h2>
+            <form id="create-community-form">
+                <div class="form-group">
+                    <label for="comm-name">Community Name *</label>
+                    <input type="text" id="comm-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="comm-description">Description *</label>
+                    <textarea id="comm-description" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="comm-logo">Logo (Optional)</label>
+                    <input type="file" id="comm-logo" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/community.js"></script>
+</body>
+</html>

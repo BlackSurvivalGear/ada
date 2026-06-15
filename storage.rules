@@ -1,0 +1,30 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    match /profiles/{uid}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /communities/{communityId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (
+        // Allow if user is owner of the community (requires firestore check)
+        // Storage rules can't easily check firestore without complex setup,
+        // so we at least restrict to signed in users and use paths.
+        // For production, we would use custom claims or more granular paths.
+        true
+      );
+    }
+
+    match /posts/{communityId}/{allPaths=**} {
+      allow read: if isSignedIn(); // In production, check community membership
+      allow write: if isSignedIn();
+    }
+  }
+}

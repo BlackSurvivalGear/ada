@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>ADA Setup Instructions</title></head>
+<body>
+<h1>Alkebulan Diaspora Alliance (ADA) Setup</h1>
+<p>To get the application running, follow these steps:</p>
+<ol>
+    <li>Create a Firebase Project at <a href="https://console.firebase.google.com/">Firebase Console</a>.</li>
+    <li>Enable <b>Authentication</b> (Email/Password and Google).</li>
+    <li>Create a <b>Firestore Database</b> and a <b>Storage</b> bucket.</li>
+    <li>Copy your Firebase configuration into <code>public/js/firebase-config.js</code>.</li>
+    <li>Deploy using Firebase CLI:
+        <pre>
+firebase login
+firebase init (select Firestore, Storage, Hosting)
+firebase deploy
+        </pre>
+    </li>
+</ol>
+</body>
+</html>

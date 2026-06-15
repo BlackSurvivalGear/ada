@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Profile - ADA</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <div id="app">
+        <section class="container">
+            <div class="form-card">
+                <h2>Complete Your Profile</h2>
+                <p>Tell us a bit about yourself to join the community.</p>
+
+                <form id="profile-setup-form">
+                    <div class="profile-photo-upload">
+                        <img id="photo-preview" src="assets/default-avatar.png" alt="Profile Preview">
+                        <input type="file" id="profile-photo-input" accept="image/*" style="display: none;">
+                        <button type="button" id="upload-photo-btn" class="btn btn-small">Upload Photo</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="display-name">Display Name *</label>
+                        <input type="text" id="display-name" required placeholder="e.g. Kofi Annan">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="country-residence">Country of Residence *</label>
+                        <input type="text" id="country-residence" required placeholder="e.g. Ghana">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="country-heritage">Country of Heritage/Origin</label>
+                        <input type="text" id="country-heritage" placeholder="e.g. Nigeria">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="user-bio">Short Bio</label>
+                        <textarea id="user-bio" rows="3" placeholder="A little about you..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Save and Continue</button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>
