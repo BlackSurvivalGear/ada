@@ -11,33 +11,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
+            logStep('Community loading', 'No user found, redirecting to index');
             window.location.href = 'index.html';
             return;
         }
 
-        // Check if profile complete
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        if (!userDoc.exists) {
-            window.location.href = 'profile-setup.html';
-            return;
-        }
+        try {
+            logStep('Community loading', 'Checking profile status');
+            // Check if profile complete
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (!userDoc.exists) {
+                logStep('Community loading', 'Profile not found, redirecting');
+                window.location.href = 'profile-setup.html';
+                return;
+            }
 
-        document.getElementById('user-name').textContent = userDoc.data().displayName;
-        loadUserCommunities(user.uid);
+            const userNameEl = document.getElementById('user-name');
+            if (userNameEl) userNameEl.textContent = userDoc.data().displayName;
+
+            loadUserCommunities(user.uid);
+        } catch (error) {
+            console.error("Community auth check error:", error);
+            showError("Failed to verify account status.");
+        }
     });
 
     if (signoutBtn) {
         signoutBtn.addEventListener('click', () => {
-            auth.signOut().then(() => window.location.href = 'index.html');
+            auth.signOut().then(() => {
+                sessionStorage.removeItem('currentCommunityId');
+                window.location.href = 'index.html';
+            });
         });
     }
 
     // Modal Toggles
     if (showCreateModalBtn) {
-        showCreateModalBtn.addEventListener('click', () => createModal.style.display = 'flex');
+        showCreateModalBtn.addEventListener('click', () => {
+            if (createModal) createModal.style.display = 'flex';
+        });
     }
     if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', () => createModal.style.display = 'none');
+        closeModalBtn.addEventListener('click', () => {
+            if (createModal) createModal.style.display = 'none';
+        });
     }
     window.onclick = (event) => {
         if (event.target == createModal) createModal.style.display = 'none';
@@ -48,12 +65,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!communitiesList) return;
 
         try {
+            logStep('Community loading', 'Fetching user memberships');
             const membershipsSnapshot = await db.collection('memberships')
                 .where('uid', '==', uid)
                 .get();
 
             if (membershipsSnapshot.empty) {
-                communitiesList.innerHTML = '<p>You haven\'t joined any communities yet.</p>';
+                logStep('Community loading', 'No memberships found. Showing onboarding UI.');
+                communitiesList.innerHTML = `
+                    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                        <h3>Welcome to the ADA!</h3>
+                        <p>You haven't joined any communities yet. To get started, you can either:</p>
+                        <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 20px;">
+                            <button onclick="document.getElementById('invite-code').focus()" class="btn btn-secondary">Join via Invite Code</button>
+                            <span>OR</span>
+                            <button onclick="document.getElementById('show-create-modal').click()" class="btn btn-primary">Create Your Own</button>
+                        </div>
+                    </div>
+                `;
                 return;
             }
 
@@ -67,9 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderCommunityCard(communityDoc.id, community, membership.role);
                 }
             }
+            logStep('Community loading', `Loaded ${membershipsSnapshot.size} communities`);
         } catch (error) {
-            console.error(error);
-            communitiesList.innerHTML = '<p>Error loading communities.</p>';
+            console.error("Error loading user communities:", error);
+            communitiesList.innerHTML = '<p>Error loading communities. Please try again later.</p>';
+            showError("Failed to load your communities.");
         }
     }
 
@@ -98,9 +129,19 @@ document.addEventListener('DOMContentLoaded', () => {
         createForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const user = auth.currentUser;
-            const name = document.getElementById('comm-name').value;
-            const description = document.getElementById('comm-description').value;
-            const logoFile = document.getElementById('comm-logo').files[0];
+            const nameEl = document.getElementById('comm-name');
+            const descEl = document.getElementById('comm-description');
+            const logoEl = document.getElementById('comm-logo');
+
+            const name = nameEl ? nameEl.value : '';
+            const description = descEl ? descEl.value : '';
+            const logoFile = logoEl ? logoEl.files[0] : null;
+
+            const submitBtn = createForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating...';
+            }
 
             try {
                 const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -132,12 +173,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     joinedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert(`Community created! Invite code: ${inviteCode}`);
-                createModal.style.display = 'none';
+                showSuccess(`Community created! Invite code: ${inviteCode}`);
+                if (createModal) createModal.style.display = 'none';
                 loadUserCommunities(user.uid);
             } catch (error) {
-                console.error(error);
-                alert("Error creating community: " + error.message);
+                console.error("Error creating community:", error);
+                showError("Error creating community: " + error.message);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create';
+                }
             }
         });
     }
@@ -147,7 +193,16 @@ document.addEventListener('DOMContentLoaded', () => {
         joinForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const user = auth.currentUser;
-            const inviteCode = document.getElementById('invite-code').value.trim().toUpperCase();
+            const inviteEl = document.getElementById('invite-code');
+            const inviteCode = inviteEl ? inviteEl.value.trim().toUpperCase() : '';
+
+            if (!inviteCode) return;
+
+            const submitBtn = joinForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Joining...';
+            }
 
             try {
                 const query = await db.collection('communities')
@@ -156,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .get();
 
                 if (query.empty) {
-                    alert("Invalid invite code.");
+                    showError("Invalid invite code.");
                     return;
                 }
 
@@ -165,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Check if already a member
                 const membershipDoc = await db.collection('memberships').doc(`${communityId}_${user.uid}`).get();
                 if (membershipDoc.exists) {
-                    alert("You are already a member of this community.");
+                    showError("You are already a member of this community.");
                     return;
                 }
 
@@ -176,12 +231,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     joinedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                alert("Joined successfully!");
-                document.getElementById('invite-code').value = '';
+                showSuccess("Joined successfully!");
+                if (inviteEl) inviteEl.value = '';
                 loadUserCommunities(user.uid);
             } catch (error) {
-                console.error(error);
-                alert("Error joining community: " + error.message);
+                console.error("Error joining community:", error);
+                showError("Error joining community: " + error.message);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Join';
+                }
             }
         });
     }

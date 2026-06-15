@@ -414,6 +414,30 @@ textarea {
     cursor: pointer;
 }
 
+.error-banner {
+    background-color: var(--error-color);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    width: 100%;
+    font-weight: 600;
+}
+
+.success-banner {
+    background-color: var(--success-color);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    width: 100%;
+    font-weight: 600;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .dashboard-layout {

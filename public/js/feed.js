@@ -15,68 +15,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
+            logStep('Dashboard rendering', 'No user found, redirecting to index');
             window.location.href = 'index.html';
             return;
         }
 
         if (!currentCommunityId) {
+            logStep('Dashboard rendering', 'No community ID found, redirecting to communities');
             window.location.href = 'communities.html';
             return;
         }
 
-        // Fetch user profile and community membership
-        const [userDoc, membershipDoc, communityDoc] = await Promise.all([
-            db.collection('users').doc(user.uid).get(),
-            db.collection('memberships').doc(`${currentCommunityId}_${user.uid}`).get(),
-            db.collection('communities').doc(currentCommunityId).get()
-        ]);
+        try {
+            logStep('Dashboard rendering', `Loading data for community: ${currentCommunityId}`);
+            // Fetch user profile and community membership
+            const [userDoc, membershipDoc, communityDoc] = await Promise.all([
+                db.collection('users').doc(user.uid).get(),
+                db.collection('memberships').doc(`${currentCommunityId}_${user.uid}`).get(),
+                db.collection('communities').doc(currentCommunityId).get()
+            ]);
 
-        if (!membershipDoc.exists) {
-            alert("You are not a member of this community.");
-            window.location.href = 'communities.html';
-            return;
+            if (!userDoc.exists) {
+                logStep('Dashboard rendering', 'User profile not found');
+                window.location.href = 'profile-setup.html';
+                return;
+            }
+
+            if (!communityDoc.exists) {
+                logStep('Dashboard rendering', 'Community not found');
+                showError("Community not found. Redirecting...");
+                setTimeout(() => window.location.href = 'communities.html', 3000);
+                return;
+            }
+
+            if (!membershipDoc.exists) {
+                logStep('Dashboard rendering', 'Membership not found');
+                showError("You are not a member of this community.");
+                setTimeout(() => window.location.href = 'communities.html', 3000);
+                return;
+            }
+
+            currentUserProfile = userDoc.data();
+            logStep('Dashboard rendering', 'Updating Dashboard UI');
+            updateDashboardUI(communityDoc.data(), membershipDoc.data());
+            setupFeedListener();
+        } catch (error) {
+            console.error("Dashboard loading error:", error);
+            showError("Failed to load dashboard: " + error.message);
         }
-
-        currentUserProfile = userDoc.data();
-        updateDashboardUI(communityDoc.data(), membershipDoc.data());
-        setupFeedListener();
     });
 
     function updateDashboardUI(communityData, membershipData) {
-        document.getElementById('current-community-name').textContent = communityData.name;
-        document.getElementById('community-desc').textContent = communityData.description;
-        document.getElementById('user-role').textContent = membershipData.role;
-        document.getElementById('display-invite-code').textContent = communityData.inviteCode;
+        const nameEl = document.getElementById('current-community-name');
+        const descEl = document.getElementById('community-desc');
+        const roleEl = document.getElementById('user-role');
+        const inviteEl = document.getElementById('display-invite-code');
 
-        if (currentUserProfile.photoURL) {
-            document.getElementById('header-user-photo').src = currentUserProfile.photoURL;
-            document.getElementById('post-author-photo').src = currentUserProfile.photoURL;
+        if (nameEl) nameEl.textContent = communityData.name;
+        if (descEl) descEl.textContent = communityData.description;
+        if (roleEl) roleEl.textContent = membershipData.role;
+        if (inviteEl) inviteEl.textContent = communityData.inviteCode;
+
+        if (currentUserProfile && currentUserProfile.photoURL) {
+            const headerPhoto = document.getElementById('header-user-photo');
+            const postPhoto = document.getElementById('post-author-photo');
+            if (headerPhoto) headerPhoto.src = currentUserProfile.photoURL;
+            if (postPhoto) postPhoto.src = currentUserProfile.photoURL;
         }
 
         // Member count (approximate or via aggregation)
         db.collection('memberships').where('communityId', '==', currentCommunityId).get().then(snap => {
-            document.getElementById('member-count').textContent = snap.size;
+            const countEl = document.getElementById('member-count');
+            if (countEl) countEl.textContent = snap.size;
 
             // Recently joined
             const recentList = document.getElementById('recent-members-list');
-            recentList.innerHTML = '';
-            // Ideally would join with users collection, but for MVP we just show a few
-            snap.docs.slice(0, 5).forEach(async mDoc => {
-                const uDoc = await db.collection('users').doc(mDoc.data().uid).get();
-                if (uDoc.exists) {
-                    const li = document.createElement('li');
-                    li.style.display = 'flex';
-                    li.style.alignItems = 'center';
-                    li.style.gap = '10px';
-                    li.style.marginBottom = '10px';
-                    li.innerHTML = `
-                        <img src="${uDoc.data().photoURL || 'assets/default-avatar.png'}" class="avatar-small" style="width:30px; height:30px">
-                        <span>${uDoc.data().displayName}</span>
-                    `;
-                    recentList.appendChild(li);
-                }
-            });
-        });
+            if (recentList) {
+                recentList.innerHTML = '';
+                // Ideally would join with users collection, but for MVP we just show a few
+                snap.docs.slice(0, 5).forEach(async mDoc => {
+                    const uDoc = await db.collection('users').doc(mDoc.data().uid).get();
+                    if (uDoc.exists) {
+                        const li = document.createElement('li');
+                        li.style.display = 'flex';
+                        li.style.alignItems = 'center';
+                        li.style.gap = '10px';
+                        li.style.marginBottom = '10px';
+                        li.innerHTML = `
+                            <img src="${uDoc.data().photoURL || 'assets/default-avatar.png'}" class="avatar-small" style="width:30px; height:30px">
+                            <span>${uDoc.data().displayName}</span>
+                        `;
+                        recentList.appendChild(li);
+                    }
+                });
+            }
+        }).catch(err => console.error("Error loading member count:", err));
     }
 
     // Image Preview
@@ -86,8 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    imagePreview.src = e.target.result;
-                    imagePreviewContainer.style.display = 'block';
+                    if (imagePreview) imagePreview.src = e.target.result;
+                    if (imagePreviewContainer) imagePreviewContainer.style.display = 'block';
                 };
                 reader.readAsDataURL(file);
             }
@@ -96,17 +129,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (removeImageBtn) {
         removeImageBtn.addEventListener('click', () => {
-            postImage.value = '';
-            imagePreview.src = '';
-            imagePreviewContainer.style.display = 'none';
+            if (postImage) postImage.value = '';
+            if (imagePreview) imagePreview.src = '';
+            if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
         });
     }
 
     // Posting
     if (postForm) {
         postForm.addEventListener('click', async () => {
-            const content = postContent.value.trim();
-            const file = postImage.files[0];
+            const content = postContent ? postContent.value.trim() : '';
+            const file = postImage ? postImage.files[0] : null;
 
             if (!content && !file) return;
 
@@ -135,13 +168,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                postContent.value = '';
-                postImage.value = '';
-                imagePreview.src = '';
-                imagePreviewContainer.style.display = 'none';
+                if (postContent) postContent.value = '';
+                if (postImage) postImage.value = '';
+                if (imagePreview) imagePreview.src = '';
+                if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
             } catch (error) {
                 console.error(error);
-                alert("Error creating post: " + error.message);
+                showError("Error creating post: " + error.message);
             } finally {
                 postForm.disabled = false;
                 postForm.textContent = 'Post';
@@ -150,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupFeedListener() {
+        if (!feedContainer) return;
         if (unsubscribeFeed) unsubscribeFeed();
 
         unsubscribeFeed = db.collection('posts')
@@ -168,10 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }, error => {
                 console.error("Feed error:", error);
                 feedContainer.innerHTML = '<p>Error loading feed. Make sure you have the required indexes.</p>';
+                showError("Feed error: " + error.message);
             });
     }
 
     async function renderPost(postId, data) {
+        if (!feedContainer) return;
+
         const postCard = document.createElement('div');
         postCard.className = 'post-card';
         const date = data.createdAt ? data.createdAt.toDate().toLocaleString() : 'Just now';
@@ -212,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check if liked
         db.collection('likes').doc(likeId).get().then(doc => {
             if (doc.exists) likeBtn.classList.add('active');
-        });
+        }).catch(err => console.error("Error checking like status:", err));
 
         likeBtn.addEventListener('click', async () => {
             const isLiked = likeBtn.classList.contains('active');
@@ -229,7 +266,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 batch.update(postRef, { likeCount: firebase.firestore.FieldValue.increment(1) });
                 likeBtn.classList.add('active');
             }
-            await batch.commit();
+            try {
+                await batch.commit();
+            } catch (err) {
+                console.error("Error toggling like:", err);
+                showError("Failed to update like status.");
+            }
         });
 
         // Comment logic
@@ -265,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.value = '';
             } catch (error) {
                 console.error(error);
+                showError("Failed to post comment.");
             }
         });
 
@@ -284,6 +327,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     div.innerHTML = `<strong>${comment.authorName}</strong> ${comment.content}`;
                     container.appendChild(div);
                 });
+            }, error => {
+                console.error("Comments error:", error);
             });
     }
 });

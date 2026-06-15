@@ -8,24 +8,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
+            logStep('Profile loading', 'No user found, redirecting to index');
             window.location.href = 'index.html';
             return;
         }
 
-        // Check if user already has a profile to pre-fill
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        if (userDoc.exists) {
-            const data = userDoc.data();
-            document.getElementById('display-name').value = data.displayName || '';
-            document.getElementById('country-residence').value = data.countryOfResidence || '';
-            document.getElementById('country-heritage').value = data.heritageCountry || '';
-            document.getElementById('user-bio').value = data.bio || '';
-            if (data.photoURL) photoPreview.src = data.photoURL;
+        try {
+            logStep('Profile loading', 'Checking for existing profile');
+            // Check if user already has a profile to pre-fill
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+                logStep('Profile loading', 'Found existing profile, pre-filling form');
+                const data = userDoc.data();
+                const nameEl = document.getElementById('display-name');
+                const resEl = document.getElementById('country-residence');
+                const herEl = document.getElementById('country-heritage');
+                const bioEl = document.getElementById('user-bio');
+
+                if (nameEl) nameEl.value = data.displayName || '';
+                if (resEl) resEl.value = data.countryOfResidence || '';
+                if (herEl) herEl.value = data.heritageCountry || '';
+                if (bioEl) bioEl.value = data.bio || '';
+                if (data.photoURL && photoPreview) photoPreview.src = data.photoURL;
+            } else {
+                logStep('Profile loading', 'No existing profile found');
+            }
+        } catch (error) {
+            console.error("Profile check error:", error);
+            showError("Failed to load profile data.");
         }
     });
 
     if (uploadBtn) {
-        uploadBtn.addEventListener('click', () => photoInput.click());
+        uploadBtn.addEventListener('click', () => {
+            if (photoInput) photoInput.click();
+        });
     }
 
     if (photoInput) {
@@ -33,7 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => photoPreview.src = e.target.result;
+                reader.onload = (e) => {
+                    if (photoPreview) photoPreview.src = e.target.result;
+                };
                 reader.readAsDataURL(file);
             }
         });
@@ -45,15 +64,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const user = auth.currentUser;
             if (!user) return;
 
-            const displayName = document.getElementById('display-name').value;
-            const countryOfResidence = document.getElementById('country-residence').value;
-            const heritageCountry = document.getElementById('country-heritage').value;
-            const bio = document.getElementById('user-bio').value;
-            const photoFile = photoInput.files[0];
+            const nameEl = document.getElementById('display-name');
+            const resEl = document.getElementById('country-residence');
+            const herEl = document.getElementById('country-heritage');
+            const bioEl = document.getElementById('user-bio');
 
-            let photoURL = photoPreview.src.includes('default-avatar.png') ? '' : photoPreview.src;
+            const displayName = nameEl ? nameEl.value : '';
+            const countryOfResidence = resEl ? resEl.value : '';
+            const heritageCountry = herEl ? herEl.value : '';
+            const bio = bioEl ? bioEl.value : '';
+            const photoFile = photoInput ? photoInput.files[0] : null;
+
+            let photoURL = (photoPreview && photoPreview.src.includes('default-avatar.png')) ? '' : (photoPreview ? photoPreview.src : '');
+
+            const submitBtn = profileForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+            }
 
             try {
+                logStep('Profile loading', 'Saving profile data...');
                 // Upload photo if new one selected
                 if (photoFile) {
                     const storageRef = storage.ref(`profiles/${user.uid}/photo`);
@@ -81,10 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     await db.collection('users').doc(user.uid).update(userData);
                 }
 
+                logStep('Profile loading', 'Profile saved successfully');
                 window.location.href = 'communities.html';
             } catch (error) {
-                console.error(error);
-                alert("Error saving profile: " + error.message);
+                console.error("Error saving profile:", error);
+                showError("Error saving profile: " + error.message);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save and Continue';
+                }
             }
         });
     }
